@@ -1,0 +1,97 @@
+Raspberry Pi Web Server using Flask to Control GPIOs 
+
+Step 1 : To install Flask, you'll need to have pip installed. Run the following commands to update your Pi and install pip:
+1.	pi@raspberrypi ~ $ sudo apt-get update
+2.	pi@raspberrypi ~ $ sudo apt-get upgrade
+3.	pi@raspberrypi ~ $ sudo apt-get install python-pip python-flask
+4.	pi@raspberrypi ~ $ sudo pip install flask
+
+
+from flask import Flask
+from gpiozero import Button, LED
+
+button = Button(26, bounce_time=0.05)
+led_list = [LED(17), LED(27)]
+
+for led in led_list:
+    led.off()
+
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return "hello from flask"
+
+@app.route("/push-button")
+def check_push_button():
+    if button.is_pressed:
+        return "button is pressed"
+    return "button is not pressed"
+
+@app.route("/led/<int:led_number>/state/<int:state>")
+def switch_led(led_number, state):
+    if led_number < 0 or led_number >= len(led_list):
+        return "wrong LED number: " + str(led_number)
+    if state not in (0, 1):
+        return "state must be 0 or 1"
+
+    if state == 0:
+        led_list[led_number].off()
+    else:
+        led_list[led_number].on()
+
+    return "ok"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0")
+
+
+Creating the Python Webserver Script
+1.	pi@raspberrypi ~ $ mkdir web-server
+2.	pi@raspberrypi ~ $ cd web-server
+3.	pi@raspberrypi:~/web-server $
+4.	pi@raspberrypi:~/web-server $ nano app.py
+
+
+Creating the HTML File
+1.	pi@raspberrypi:~/web-server $ mkdir templates
+2.	pi@raspberrypi:~/web-server $ cd templates
+3.	pi@raspberrypi:~/web-server/templates $
+4.	pi@raspberrypi:~/web-server/templates $ nano main.html
+
+HTML code :
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-g">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPi LED Control</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #282c34; color: white;}
+        .container { max-width: 400px; margin: auto; padding: 20px; background-color: #3c4049; border-radius: 10px;}
+        h1 { color: #61dafb; }
+        .button { display: inline-block; padding: 15px 25px; font-size: 24px; cursor: pointer; text-align: center; text-decoration: none;
+                  outline: none; color: #fff; border: none; border-radius: 15px; box-shadow: 0 5px #999; }
+        .button-on { background-color: #4CAF50; }
+        .button-on:active { background-color: #3e8e41; box-shadow: 0 3px #666; transform: translateY(4px); }
+        .button-off { background-color: #f44336; margin-left: 20px; }
+        .button-off:active { background-color: #da190b; box-shadow: 0 3px #666; transform: translateY(4px); }
+        .status { margin-top: 30px; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>💡 Raspberry Pi LED Control</h1>
+        <p>Click a button to control the GPIO LED.</p>
+        <a href="/led/on" class="button button-on">Turn ON</a>
+        <a href="/led/off" class="button button-off">Turn OFF</a>
+        <div class="status">
+            <p>Current LED Status: <strong>{{ 'ON' if led_state else 'OFF' }}</strong></p>
+        </div>
+    </div>
+
+</body>
+</html>
+
+
