@@ -7,7 +7,7 @@ Step 1 : To install Flask, you'll need to have pip installed. Run the following 
 4.	pi@raspberrypi ~ $ sudo pip install flask
 
 
-from flask import Flask
+from flask import Flask, render_template
 from gpiozero import Button, LED
 
 button = Button(26, bounce_time=0.05)
@@ -20,7 +20,8 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return "hello from flask"
+    led_state = led_list[0].is_lit  # show first LED status
+    return render_template("main.html", led_state=led_state)
 
 @app.route("/push-button")
 def check_push_button():
@@ -42,8 +43,19 @@ def switch_led(led_number, state):
 
     return "ok"
 
+@app.route("/led/on")
+def led_on():
+    led_list[0].on()
+    return render_template("main.html", led_state=True)
+
+@app.route("/led/off")
+def led_off():
+    led_list[0].off()
+    return render_template("main.html", led_state=False)
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=5000)
+
 
 
 Creating the Python Webserver Script
