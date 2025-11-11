@@ -25,33 +25,7 @@ void loop() {
   }
 }
 
-
-Raspberry Pi  Side :
-On Raspberry Pi:
-1.	Run following command in terminal :
-sudo apt update && sudo apt upgrade –y
-sudo apt install -y bluetooth bluez bluez-tools rfcomm python3-serial
-2.	Turn on Bluetooth (bluetoothctl)
-3.	Run the following commands in terminal:
-bluetoothctl
-power on
-agent on
-scan on
-4.	Note down the MAC address of HC-05 (something like 00:18:E4:35:9D:8B).
-5.	Pair and connect:
-pair XX:XX:XX:XX:XX:XX
-trust XX:XX:XX:XX:XX:XX
-connect XX:XX:XX:XX:XX:XX
-6.	Run the following commands in terminal: 
-            scan off
-            quit
-            ls /dev/rfcomm*
-            sudo rfcomm release 0    
-            sudo rfcomm bind 0 XX:XX:XX:XX:XX:XX
-            ls -l /dev/rfcomm0
-            python3 bt_connect.py  
-      
-
+now run this code on thonny:
 Raspberry Pi Python Application:
  Python script (bt_connect.py):
 import serial
@@ -83,3 +57,30 @@ while True:
     # Send message to Arduino
     bt.write(b'H')  
     time.sleep(2)
+
+
+now run these commands on terminal:
+1.	Run following command in terminal :
+sudo apt update && sudo apt upgrade –y
+sudo apt install -y bluetooth bluez bluez-tools rfcomm python3-serial
+2.	Turn on Bluetooth (bluetoothctl)
+3.	Run the following commands in terminal:
+bluetoothctl
+power on
+agent on
+scan on
+4.	Note down the MAC address of HC-05 (something like 00:18:E4:35:9D:8B).
+5.	Pair and connect:
+pair XX:XX:XX:XX:XX:XX
+trust XX:XX:XX:XX:XX:XX
+connect XX:XX:XX:XX:XX:XX
+6.	Run the following commands in terminal: 
+            scan off
+            quit
+            ls /dev/rfcomm*
+            sudo rfcomm release 0    
+            sudo rfcomm bind 0 XX:XX:XX:XX:XX:XX
+            ls -l /dev/rfcomm0
+            python3 bt_connect.py  
+      
+
