@@ -1,4 +1,4 @@
-LED and Motion Sensor  Code :
+1) LED and Motion Sensor  Code :
 
 from gpiozero import LED, MotionSensor
 from time import sleep
@@ -15,7 +15,7 @@ while True:
 
 
 
-LM35 Sensor CODE :
+2) LM35 Sensor CODE :
 
 from gpiozero import LED, MCP3008
 from time import sleep
@@ -41,7 +41,7 @@ while True:
 
 
 
-IR Sensor code: 
+3) IR Sensor code: 
 from gpiozero import LED, DigitalInputDevice
 from time import sleep
 
@@ -58,4 +58,42 @@ while True:
         print("No Object")
         led.off()
     sleep(1)
+
+
+4) DHT 11:
+ INSTALL THESE LIBRARIES:
+pip install adafruit-circuitpython-dht
+sudo apt install libgpiod2
+
+
+CODE:
+import time
+import adafruit_dht
+import board
+
+# Initialize DHT11 sensor on GPIO4
+dht_device = adafruit_dht.DHT11(board.D4)
+
+print("Reading temperature and humidity from DHT11...\n")
+
+while True:
+    try:
+        temperature_c = dht_device.temperature
+        humidity = dht_device.humidity
+
+        if humidity is not None and temperature_c is not None:
+            print(f"Temp: {temperature_c:.1f}°C   Humidity: {humidity:.1f}%")
+        else:
+            print("Sensor not responding, retrying...")
+
+    except RuntimeError as error:
+        # Common for DHT11: retry on reading errors
+        print("Error reading sensor:", error.args[0])
+        time.sleep(2.0)
+        continue
+    except Exception as error:
+        dht_device.exit()
+        raise error
+
+    time.sleep(2.0)
 
