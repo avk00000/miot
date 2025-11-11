@@ -25,9 +25,11 @@ void loop() {
   }
 }
 
-now run this code on thonny:
+now copy  and save this code on thonny:
 Raspberry Pi Python Application:
  Python script (bt_connect.py):
+
+
 import serial
 import time
 
