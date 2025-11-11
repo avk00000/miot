@@ -7,6 +7,21 @@ Step 1 : To install Flask, you'll need to have pip installed. Run the following 
 4.	pi@raspberrypi ~ $ sudo pip install flask
 
 
+Creating the Python Webserver Script
+1.	pi@raspberrypi ~ $ mkdir web-server
+2.	pi@raspberrypi ~ $ cd web-server
+3.	pi@raspberrypi:~/web-server $
+4.	pi@raspberrypi:~/web-server $ nano app.py
+
+
+Creating the HTML File
+1.	pi@raspberrypi:~/web-server $ mkdir templates
+2.	pi@raspberrypi:~/web-server $ cd templates
+3.	pi@raspberrypi:~/web-server/templates $
+4.	pi@raspberrypi:~/web-server/templates $ nano main.html
+
+
+app.py:
 from flask import Flask, render_template
 from gpiozero import Button, LED
 
@@ -58,18 +73,6 @@ if __name__ == "__main__":
 
 
 
-Creating the Python Webserver Script
-1.	pi@raspberrypi ~ $ mkdir web-server
-2.	pi@raspberrypi ~ $ cd web-server
-3.	pi@raspberrypi:~/web-server $
-4.	pi@raspberrypi:~/web-server $ nano app.py
-
-
-Creating the HTML File
-1.	pi@raspberrypi:~/web-server $ mkdir templates
-2.	pi@raspberrypi:~/web-server $ cd templates
-3.	pi@raspberrypi:~/web-server/templates $
-4.	pi@raspberrypi:~/web-server/templates $ nano main.html
 
 HTML code :
 <!DOCTYPE html>
@@ -107,3 +110,11 @@ HTML code :
 </html>
 
 
+for execution run these commands:
+cd web_server
+python3 app.py 
+
+if public URL is not awailable then open another terminal and run :
+hostname -I
+THIS WILL GIVE U THE IP ADDRESS WHICH U PASTE IT ON BROWSER AS : 
+http://IPADRESS:5000
