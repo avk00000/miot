@@ -17,8 +17,7 @@ Creating the Python Webserver Script
 Creating the HTML File
 1.	pi@raspberrypi:~/web-server $ mkdir templates
 2.	pi@raspberrypi:~/web-server $ cd templates
-3.	pi@raspberrypi:~/web-server/templates $
-4.	pi@raspberrypi:~/web-server/templates $ nano main.html
+3.	pi@raspberrypi:~/web-server/templates $ nano main.html
 
 
 app.py:
