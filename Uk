@@ -1,0 +1,151 @@
+#include <ESP32Servo.h>
+
+/*
+  3-DOF Stewart Platform - Medium Smooth Movements (Increased Range)
+  Hardware: ESP32 + 3x DS51150-12V Servos
+  Safe Range: 150° to 220° (Mapped to 95-150 logic for this specific code version)
+*/
+
+// --- 1. Servo Objects ---
+Servo servo1;
+Servo servo2;
+Servo servo3;
+
+// --- 2. Pin Definitions ---
+const int servo1Pin = 16;
+const int servo2Pin = 17;
+const int servo3Pin = 18;
+
+// --- 3. Safe Angle Settings ---
+const int SERVO_MIN  = 95;
+const int SERVO_MAX  = 150;
+const int SERVO_HOME = 150;
+const int SERVO_MID  = (SERVO_MIN + SERVO_MAX) / 2; // ~122
+
+// --- 4. Animation / Timing Parameters ---
+const unsigned long CYCLE_DURATION = 10000; // 10 seconds per full sequence
+
+// --- 5. Smoothing / Speed Control ---
+// MEDIUM speed: increase for faster, decrease for slower
+const float maxDegPerSec = 30.0; 
+
+// --- 6. Motion Range Configuration (INCREASED) ---
+const float HEAVE_RANGE = 35.0; // Up/Down motion amount
+const float PITCH_RANGE = 25.0; // INCREASED: Tilt Front/Back amount (was 20.0)
+const float ROLL_RANGE  = 25.0; // INCREASED: Tilt Side/Side amount (was 20.0)
+
+
+// Smoothed current positions
+float currentAngle1 = SERVO_MID;
+float currentAngle2 = SERVO_MID;
+float currentAngle3 = SERVO_MID;
+
+// Time tracking
+unsigned long lastUpdateMs = 0;
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("--- Stewart Platform: Medium Smooth (Increased Range) ---");
+
+  ESP32PWM::allocateTimer(0);
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
+
+  servo1.setPeriodHertz(50);
+  servo1.attach(servo1Pin, 500, 2500);
+
+  servo2.setPeriodHertz(50);
+  servo2.attach(servo2Pin, 500, 2500);
+
+  servo3.setPeriodHertz(50);
+  servo3.attach(servo3Pin, 500, 2500);
+
+  lastUpdateMs = millis();
+
+  // Safe start: instant-to-mid then smooth sweep to HOME
+  Serial.printf("Init to MID (%d)\n", SERVO_MID);
+  servo1.write(SERVO_MID);
+  servo2.write(SERVO_MID);
+  servo3.write(SERVO_MID);
+  currentAngle1 = currentAngle2 = currentAngle3 = SERVO_MID;
+  delay(600);
+
+  Serial.printf("Smooth sweep to HOME (%d)\n", SERVO_HOME);
+  while (fabs(currentAngle1 - SERVO_HOME) > 0.5) {
+    unsigned long now = millis();
+    float dt = (now - lastUpdateMs) / 1000.0;
+    if (dt <= 0) dt = 0.001;
+    lastUpdateMs = now;
+
+    float maxStep = maxDegPerSec * dt;
+
+    currentAngle1 = approach(currentAngle1, SERVO_HOME, maxStep);
+    currentAngle2 = approach(currentAngle2, SERVO_HOME, maxStep);
+    currentAngle3 = approach(currentAngle3, SERVO_HOME, maxStep);
+
+    int out1 = constrain((int)currentAngle1, SERVO_MIN, SERVO_MAX);
+    int out2 = constrain((int)currentAngle2, SERVO_MIN, SERVO_MAX);
+    int out3 = constrain((int)currentAngle3, SERVO_MIN, SERVO_MAX);
+
+    servo1.write(out1);
+    servo2.write(out2);
+    servo3.write(out3);
+
+    delay(20);
+  }
+
+  delay(800);
+  Serial.println("Starting loop...");
+}
+
+void loop() {
+  unsigned long now = millis();
+  float dt = (now - lastUpdateMs) / 1000.0;
+  if (dt <= 0) dt = 0.001;
+  if (dt > 0.1) dt = 0.1; // protect against huge dt
+  lastUpdateMs = now;
+
+  float cycleProgress = (float)(now % CYCLE_DURATION) / CYCLE_DURATION;
+  float mix = 0.5 * (1.0 - cos(cycleProgress * 2.0 * PI));
+
+  // Motion signals
+  // Note: We now use the defined constants for ranges
+  float heaveSignal = HEAVE_RANGE * sin(now / 1000.0 * 2.0);
+  float rollSignal  = ROLL_RANGE  * sin(now / 1000.0 * 3.0);
+  float pitchSignal = PITCH_RANGE * cos(now / 1000.0 * 2.5);
+
+  float heaveAmount = 1.0 - mix;
+  float tiltAmount  = mix;
+
+  float target1 = SERVO_MID + (heaveSignal * heaveAmount) + (pitchSignal * tiltAmount);
+  float target2 = SERVO_MID + (heaveSignal * heaveAmount) - (pitchSignal * 0.5 * tiltAmount) + (rollSignal * tiltAmount);
+  float target3 = SERVO_MID + (heaveSignal * heaveAmount) - (pitchSignal * 0.5 * tiltAmount) - (rollSignal * tiltAmount);
+
+  // Safety clamp
+  target1 = constrain((int)target1, SERVO_MIN, SERVO_MAX);
+  target2 = constrain((int)target2, SERVO_MIN, SERVO_MAX);
+  target3 = constrain((int)target3, SERVO_MIN, SERVO_MAX);
+
+  float maxStep = maxDegPerSec * dt;
+  currentAngle1 = approach(currentAngle1, target1, maxStep);
+  currentAngle2 = approach(currentAngle2, target2, maxStep);
+  currentAngle3 = approach(currentAngle3, target3, maxStep);
+
+  int out1 = constrain((int)currentAngle1, SERVO_MIN, SERVO_MAX);
+  int out2 = constrain((int)currentAngle2, SERVO_MIN, SERVO_MAX);
+  int out3 = constrain((int)currentAngle3, SERVO_MIN, SERVO_MAX);
+
+  servo1.write(out1);
+  servo2.write(out2);
+  servo3.write(out3);
+
+  // Serial.printf("T:%.1f C:%.1f | %.1f\n", target1, currentAngle1, maxDegPerSec); // optional
+  delay(20); // ~50 Hz
+}
+
+float approach(float current, float target, float maxStep) {
+  float diff = target - current;
+  if (fabs(diff) <= maxStep) return target;
+  return current + (diff > 0 ? maxStep : -maxStep);
+}
